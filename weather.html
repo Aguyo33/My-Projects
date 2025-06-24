@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #e6f7ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      transition: background-color 0.3s;
+    }
+    .dark-mode {
+      background-color: #1c1c1c;
+      color: #fff;
+    }
+    .weather-container {
+      background-color: #fff8e1;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .dark-mode .weather-container {
+      background-color: #2d2d2d;
+      color: #eee;
+    }
+    input, button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+    input {
+      width: 70%;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007acc;
+      color: white;
+      cursor: pointer;
+    }
+    .weather-result {
+      margin-top: 20px;
+    }
+    .forecast-day {
+      background-color: rgba(255, 255, 255, 0.3);
+      border-radius: 5px;
+      padding: 10px;
+      margin-top: 10px;
+    }
+    .toggle-btn {
+      margin-top: 10px;
+      background-color: #555;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="weather-container">
+  <h2>Weather App</h2>
+  <input type="text" id="cityInput" placeholder="Enter city name" />
+  <button onclick="getWeather()">Get Weather</button>
+  <button onclick="getLocationWeather()">Use My Location</button>
+  <button class="toggle-btn" onclick="toggleDarkMode()">Toggle Dark Mode</button>
+  <div class="weather-result" id="weatherResult"></div>
+</div>
+
+<script>
+  const apiKey = "2e65ec2382ca464dac1191857242801";
+
+  async function getWeather(city = null) {
+    if (!city) {
+      city = document.getElementById("cityInput").value.trim();
+    }
+    if (!city) return;
+
+    const url = `http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city}&days=3&aqi=no&alerts=no`;
+
+    try {
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.error) {
+        document.getElementById("weatherResult").innerHTML = `<p style="color:red;">${data.error.message}</p>`;
+        return;
+      }
+
+      const current = data.current;
+      const location = data.location;
+      const forecast = data.forecast.forecastday;
+
+      let forecastHTML = forecast.map(day => {
+        return `
+          <div class="forecast-day">
+            <strong>${day.date}</strong>
+            <p>${day.day.condition.text}</p>
+            <img src="${day.day.condition.icon}" alt="${day.day.condition.text}" />
+            <p>Max: ${day.day.maxtemp_c} °C, Min: ${day.day.mintemp_c} °C</p>
+          </div>
+        `;
+      }).join("");
+
+      document.getElementById("weatherResult").innerHTML = `
+        <h3>${location.name}, ${location.country}</h3>
+        <p>Temperature: ${current.temp_c} °C</p>
+        <p>Condition: ${current.condition.text}</p>
+        <img src="${current.condition.icon}" alt="${current.condition.text}" />
+        <p>Humidity: ${current.humidity}%</p>
+        <p>Wind: ${current.wind_kph} kph</p>
+        <h4>3-Day Forecast</h4>
+        ${forecastHTML}
+      `;
+    } catch (error) {
+      document.getElementById("weatherResult").innerHTML = `<p style="color:red;">Error fetching weather data.</p>`;
+    }
+  }
+
+  function getLocationWeather() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async position => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const cityUrl = `http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}&days=3&aqi=no&alerts=no`;
+        const response = await fetch(cityUrl);
+        const data = await response.json();
+        getWeather(`${lat},${lon}`);
+      }, () => {
+        alert("Location access denied.");
+      });
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  }
+
+  function toggleDarkMode() {
+    document.body.classList.toggle("dark-mode");
+  }
+</script>
+
+</body>
+</html>
