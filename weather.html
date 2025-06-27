@@ -130,7 +130,22 @@
       navigator.geolocation.getCurrentPosition(async position => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        const cityUrl = `http://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${lat},${lon}&days=3&aqi=no&alerts=no`;
+       document.getElementById("weatherResult").innerHTML = `
+<div style="display:flex;">
+<div>
+<h3>${location.name}, ${location.country}</h3>
+<p>Temperature: ${current.temp_c} °C</p>
+<p>Condition: ${current.condition.text}</p>
+<img src="${current.condition.icon}" alt="${current.condition.text}" />
+<p>Humidity: ${current.humidity}%</p>
+<p>Wind: ${current.wind_kph} kph</p>
+</div>
+<div style="border-left:1px solid;">
+<h4>3-Day Forecast</h4>
+<div style="display:flex;">${forecastHTML}</div>
+</div>
+</div>
+`;
         const response = await fetch(cityUrl);
         const data = await response.json();
         getWeather(`${lat},${lon}`);
